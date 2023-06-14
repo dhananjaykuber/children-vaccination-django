@@ -1,4 +1,3 @@
-
 ## Children Vaccination Shceduler
 
 The Children Vaccination System is a application designed to streamline and manage the vaccination process for newborn children. It provides a centralized platform for hospitals to register children, maintain vaccination records, and facilitate communication with parents. The system aims to ensure that children receive timely vaccinations according to the recommended schedule, thereby promoting their health and well-being.
@@ -6,8 +5,11 @@ The Children Vaccination System is a application designed to streamline and mana
 ### Key Features:
 
 #### 1) Registration and Profile Management:
+
 #### 2) Admin Panel:
+
 #### 3) Child Profile Management:
+
 #### 4) Security and Authentication:
 
 ## API Reference
@@ -18,14 +20,15 @@ The Children Vaccination System is a application designed to streamline and mana
   POST /api/hospital-register/
 ```
 
-| Parameter | Type     | Description                |
-| :-------- | :------- | :------------------------- |
-| `name`    | `string` | **Required**. name of hospital |
-| `phone_number`    | `number` | **Required**. phone number of hospital |
-| `email`    | `email` | **Required & Unique**. email of hospital |
-| `password`    | `string` | **Required**. password for admin account |
+| Parameter      | Type     | Description                              |
+| :------------- | :------- | :--------------------------------------- |
+| `name`         | `string` | **Required**. name of hospital           |
+| `phone_number` | `number` | **Required**. phone number of hospital   |
+| `email`        | `email`  | **Required & Unique**. email of hospital |
+| `password`     | `string` | **Required**. password for admin account |
 
 #### Response
+
 ```JSON
 {
     "success": true,
@@ -45,12 +48,13 @@ The Children Vaccination System is a application designed to streamline and mana
   POST /api/hospital-login/
 ```
 
-| Parameter | Type     | Description                       |
-| :-------- | :------- | :-------------------------------- |
-| `email`    | `email` | **Required**. email of hospital |
-| `password`    | `string` | **Required**. password of admin account |
+| Parameter  | Type     | Description                             |
+| :--------- | :------- | :-------------------------------------- |
+| `email`    | `email`  | **Required**. email of hospital         |
+| `password` | `string` | **Required**. password of admin account |
 
 #### Response
+
 ```JSON
 {
     "success": true,
@@ -72,15 +76,16 @@ The Children Vaccination System is a application designed to streamline and mana
   POST /api/children-register/
 ```
 
-| Parameter | Type     | Description                       |
-| :-------- | :------- | :-------------------------------- |
-| `dob`    | `date` | **Required**. (%Y-%M-%D) |
-| `gender`    | `string` | **Required**. (M or F) |
-| `parent_name`    | `string` | **Required**. |
-| `parent_email`    | `string` | **Required**. |
-| `phone_number`    | `number` | **Required**. |
+| Parameter      | Type     | Description              |
+| :------------- | :------- | :----------------------- |
+| `dob`          | `date`   | **Required**. (%Y-%M-%D) |
+| `gender`       | `string` | **Required**. (M or F)   |
+| `parent_name`  | `string` | **Required**.            |
+| `parent_email` | `string` | **Required**.            |
+| `phone_number` | `number` | **Required**.            |
 
 #### Response
+
 ```JSON
 {
     "success": true,
@@ -103,6 +108,7 @@ The Children Vaccination System is a application designed to streamline and mana
 ```
 
 #### Response
+
 ```JSON
 {
     "success": true,
@@ -174,6 +180,7 @@ The Children Vaccination System is a application designed to streamline and mana
 ```
 
 #### Response
+
 ```JSON
 {
     "success": true,
@@ -198,6 +205,7 @@ The Children Vaccination System is a application designed to streamline and mana
 ```
 
 #### Response
+
 ```JSON
 {
     "success": true,
@@ -212,6 +220,7 @@ The Children Vaccination System is a application designed to streamline and mana
 ```
 
 #### Response
+
 ```JSON
 {
     "success": true,
@@ -229,6 +238,35 @@ The Children Vaccination System is a application designed to streamline and mana
 }
 ```
 
+#### Update children data
+
+```http
+  PUT /api/children-update/<id>
+```
+
+| Parameter      | Type     | Description                |
+| :------------- | :------- | :------------------------- |
+| `gender`       | `string` | **Optional**. ("M" or "F") |
+| `parent_name`  | `string` | **Optional**               |
+| `parent_email` | `email`  | **Optional**               |
+| `phone_number` | `number` | **Optional**               |
+| `dob`          | `date`   | **Optional** (%y-%m-%d)    |
+
+#### Response
+
+```JSON
+{
+    "success": true,
+    "data": {
+        "id": 1,
+        "name": "Hospital Name",
+        "phone_number": 0000000000,
+        "email": "hospital_name@gmail.com"
+    },
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJob3NwaXRhbF9pZCI6OH0.5IWfIMulXkqZplLLUPzv0zaeAqu0srIcujdFnPxzPn4"
+}
+```
+
 #### Update vaccination status
 
 ```http
@@ -237,9 +275,10 @@ The Children Vaccination System is a application designed to streamline and mana
 
 | Parameter | Type     | Description                       |
 | :-------- | :------- | :-------------------------------- |
-| `taken`    | `string` | **Required**. ("True" or "False") |
+| `taken`   | `string` | **Required**. ("True" or "False") |
 
 #### Response
+
 ```JSON
 {
     "success": true,

@@ -7,6 +7,7 @@ from rest_framework.parsers import JSONParser
 from django.views.decorators.csrf import csrf_exempt
 import datetime
 
+
 import jwt
 from rest_framework.authentication import get_authorization_header
 
@@ -72,6 +73,9 @@ def hospital_authenticate(email, password):
         return None
 
     return hospital
+
+
+# --------------------- --------------------------
 
 
 # register hospital
@@ -178,6 +182,31 @@ def children_detail(request, id):
     serializer = VaccineSerializer(vaccines, many=True)
 
     return JsonResponse({"success": True, "data": serializer.data})
+
+
+# update children
+@csrf_exempt
+def children_update(request, id):
+    hospital = authenticate_request(request)
+
+    if request.method == "PUT":
+        hospital = authenticate_request(request)
+
+        json_data = request.body
+        stream = io.BytesIO(json_data)
+        python_data = JSONParser().parse(stream)
+
+        children = Children.objects.get(Q(hospital=hospital.id) & Q(id=id))
+
+        serializer = ChildrenSerializer(children, data=python_data, partial=True)
+
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse({"success": True, "data": serializer.data})
+
+        return JsonResponse({"error": serializer.errors})
+
+    return JsonResponse({"message": "Update children"})
 
 
 # get all childrens

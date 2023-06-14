@@ -27,6 +27,18 @@ class ChildrenSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         return Children.objects.create(**validated_data)
 
+    def update(self, instance, validated_data):
+        instance.gender = validated_data.get("gender", instance.gender)
+        instance.parent_name = validated_data.get("parent_name", instance.parent_name)
+        instance.parent_email = validated_data.get(
+            "parent_email", instance.parent_email
+        )
+        instance.phone_number = validated_data.get(
+            "phone_number", instance.phone_number
+        )
+        instance.save()
+        return instance
+
 
 class VaccineSerializer(serializers.ModelSerializer):
     class Meta:
