@@ -35,7 +35,7 @@ The Children Vaccination System is a application designed to streamline and mana
     "data": {
         "id": 1,
         "name": "Hospital Name",
-        "phone_number": 0000000000,
+        "phone_number": "0000000000",
         "email": "hospital_name@gmail.com"
     },
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJob3NwaXRhbF9pZCI6OH0.5IWfIMulXkqZplLLUPzv0zaeAqu0srIcujdFnPxzPn4"
@@ -61,7 +61,7 @@ The Children Vaccination System is a application designed to streamline and mana
     "data": {
         "id": 1,
         "name": "Hospital Name",
-        "phone_number": 0000000000,
+        "phone_number": "0000000000",
         "email": "hospital_name@gmail.com"
     },
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJob3NwaXRhbF9pZCI6OH0.5IWfIMulXkqZplLLUPzv0zaeAqu0srIcujdFnPxzPn4"
@@ -95,7 +95,7 @@ The Children Vaccination System is a application designed to streamline and mana
         "gender": "M",
         "parent_name": "parent name",
         "parent_email": "parent_email@gmail.com",
-        "phone_number": 0000000000,
+        "phone_number": "0000000000",
         "hospital": 8
     }
 }
@@ -191,7 +191,7 @@ The Children Vaccination System is a application designed to streamline and mana
             "gender": "M",
             "parent_name": "parent name",
             "parent_email": "parent_email@gmail.com",
-            "phone_number": 0000000000,
+            "phone_number": "0000000000",
             "hospital": 8
         }
     ]
@@ -229,7 +229,7 @@ The Children Vaccination System is a application designed to streamline and mana
             "id": 15,
             "parent_name": "parent name",
             "parent_email": "parent_email@gmail.com",
-            "phone_number": 0000000000,
+            "phone_number": "0000000000",
             "vaccine_name": "BCG, Hep B1, OPV",
             "date": "2002-09-15",
             "taken": false
@@ -258,12 +258,14 @@ The Children Vaccination System is a application designed to streamline and mana
 {
     "success": true,
     "data": {
-        "id": 1,
-        "name": "Hospital Name",
-        "phone_number": 0000000000,
-        "email": "hospital_name@gmail.com"
-    },
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJob3NwaXRhbF9pZCI6OH0.5IWfIMulXkqZplLLUPzv0zaeAqu0srIcujdFnPxzPn4"
+        "id": 24,
+        "dob": "2002-09-15",
+        "gender": "F",
+        "parent_name": "update children 1",
+        "parent_email": "update_email@gmail.com",
+        "phone_number": "0000000000",
+        "hospital": 8
+    }
 }
 ```
 
