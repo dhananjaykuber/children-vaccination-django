@@ -2,6 +2,7 @@ from django.db.models import Q
 from .models import Hospital, Children, Vaccine
 from .serializers import HospitalSerializer, ChildrenSerializer, VaccineSerializer
 from django.http import JsonResponse
+from rest_framework import status
 import io
 from rest_framework.parsers import JSONParser
 from django.views.decorators.csrf import csrf_exempt
@@ -82,205 +83,343 @@ def hospital_authenticate(email, password):
 @csrf_exempt
 def hospital_register(request):
     if request.method == "POST":
-        json_data = request.body
-        stream = io.BytesIO(json_data)
-        python_data = JSONParser().parse(stream)
-        serializer = HospitalSerializer(data=python_data)
+        try:
+            json_data = request.body
+            stream = io.BytesIO(json_data)
+            python_data = JSONParser().parse(stream)
+            serializer = HospitalSerializer(data=python_data)
 
-        if serializer.is_valid():
-            serializer.save()
+            if serializer.is_valid():
+                serializer.save()
 
-            token = generate_token(serializer.data["id"])
+                token = generate_token(serializer.data["id"])
 
-            serializer = serializer.data
-            del serializer["password"]
+                serializer = serializer.data
+                del serializer["password"]
 
+                return JsonResponse(
+                    {
+                        "success": True,
+                        "data": serializer,
+                        "token": token,
+                    },
+                    status=status.HTTP_200_OK,
+                )
+
+            else:
+                return JsonResponse(
+                    {"success": False, "error": serializer.errors},
+                    status=status.HTTP_406_NOT_ACCEPTABLE,
+                )
+
+        except Exception as e:
             return JsonResponse(
-                {
-                    "success": True,
-                    "data": serializer,
-                    "token": token,
-                }
+                {"status": False, "error": e.args},
+                status=status.HTTP_406_NOT_ACCEPTABLE,
             )
 
-        else:
-            return JsonResponse({"success": False, "error": serializer.errors})
-
-    return JsonResponse({"message": "Hospital registration"})
+    else:
+        return JsonResponse(
+            {"success": False, "error": "Request not allowed"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
 
 # login hospital
 @csrf_exempt
 def hospital_login(request):
     if request.method == "POST":
-        json_data = request.body
-        stream = io.BytesIO(json_data)
-        python_data = JSONParser().parse(stream)
+        try:
+            json_data = request.body
+            stream = io.BytesIO(json_data)
+            python_data = JSONParser().parse(stream)
 
-        email = python_data["email"]
-        password = python_data["password"]
+            email = python_data["email"]
+            password = python_data["password"]
 
-        hospital = hospital_authenticate(email, password)
+            hospital = hospital_authenticate(email, password)
 
-        if hospital is not None:
-            serializer = HospitalSerializer(hospital)
-            serializer = serializer.data
+            if hospital is not None:
+                serializer = HospitalSerializer(hospital)
+                serializer = serializer.data
 
-            token = generate_token(serializer["id"])
+                token = generate_token(serializer["id"])
 
-            del serializer["password"]
+                del serializer["password"]
 
+                return JsonResponse(
+                    {
+                        "success": True,
+                        "data": serializer,
+                        "token": token,
+                    },
+                    status=status.HTTP_200_OK,
+                )
+            else:
+                return JsonResponse(
+                    {
+                        "success": False,
+                        "error": "Invalid email password",
+                    },
+                    status=status.HTTP_406_NOT_ACCEPTABLE,
+                )
+
+        except KeyError:
             return JsonResponse(
-                {
-                    "success": True,
-                    "data": serializer,
-                    "token": token,
-                }
+                {"success": False, "error": "Required data not found"},
+                status=status.HTTP_406_NOT_ACCEPTABLE,
             )
-        else:
-            return JsonResponse({"success": False, "error": "Invalid email password"})
 
-    return JsonResponse({"message": "Hospital login"})
+    else:
+        return JsonResponse(
+            {"success": False, "error": "Request not allowed"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
 
 # register children
 @csrf_exempt
 def children_register(request):
     if request.method == "POST":
-        hospital = authenticate_request(request)
+        try:
+            hospital = authenticate_request(request)
 
-        json_data = request.body
-        stream = io.BytesIO(json_data)
-        python_data = JSONParser().parse(stream)
-        python_data["hospital"] = hospital.id
+            json_data = request.body
+            stream = io.BytesIO(json_data)
+            python_data = JSONParser().parse(stream)
+            python_data["hospital"] = hospital.id
 
-        serializer = ChildrenSerializer(data=python_data)
+            serializer = ChildrenSerializer(data=python_data)
 
-        if serializer.is_valid():
-            serializer.save()
+            if serializer.is_valid():
+                serializer.save()
 
-            add_vaccination_records(
-                datetime.datetime.strptime(serializer.data["dob"], "%Y-%m-%d").date(),
-                serializer.data["id"],
-                serializer.data["hospital"],
+                add_vaccination_records(
+                    datetime.datetime.strptime(
+                        serializer.data["dob"], "%Y-%m-%d"
+                    ).date(),
+                    serializer.data["id"],
+                    serializer.data["hospital"],
+                )
+
+                return JsonResponse(
+                    {"success": True, "data": serializer.data},
+                    status=status.HTTP_200_OK,
+                )
+            else:
+                return JsonResponse(
+                    {"success": False, "error": serializer.errors},
+                    status=status.HTTP_406_NOT_ACCEPTABLE,
+                )
+
+        except Exception as e:
+            return JsonResponse(
+                {"error": e.args}, status=status.HTTP_406_NOT_ACCEPTABLE
             )
 
-            return JsonResponse({"success": True, "data": serializer.data})
-        else:
-            return JsonResponse({"success": False, "error": serializer.errors})
-
-    return JsonResponse({"message": "Children registration"})
+    else:
+        return JsonResponse(
+            {"success": False, "error": "Request not allowed"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
 
 # get children detail by id
 @csrf_exempt
 def children_detail(request, id):
-    hospital = authenticate_request(request)
+    try:
+        hospital = authenticate_request(request)
 
-    vaccines = Vaccine.objects.filter(hospital=hospital.id, children=id)
+        vaccines = Vaccine.objects.filter(hospital=hospital.id, children=id)
 
-    serializer = VaccineSerializer(vaccines, many=True)
+        serializer = VaccineSerializer(vaccines, many=True)
 
-    return JsonResponse({"success": True, "data": serializer.data})
+        return JsonResponse(
+            {"success": True, "data": serializer.data}, status=status.HTTP_200_OK
+        )
+
+    except KeyError:
+        return JsonResponse(
+            {"success": False, "error": "Required data not found"},
+            status=status.HTTP_406_NOT_ACCEPTABLE,
+        )
+
+    except Exception as e:
+        return JsonResponse({"error": e.args}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
 
 # update children
 @csrf_exempt
 def children_update(request, id):
-    hospital = authenticate_request(request)
-
     if request.method == "PUT":
-        hospital = authenticate_request(request)
+        try:
+            hospital = authenticate_request(request)
 
-        json_data = request.body
-        stream = io.BytesIO(json_data)
-        python_data = JSONParser().parse(stream)
+            json_data = request.body
+            stream = io.BytesIO(json_data)
+            python_data = JSONParser().parse(stream)
 
-        children = Children.objects.get(Q(hospital=hospital.id) & Q(id=id))
+            children = Children.objects.get(Q(hospital=hospital.id) & Q(id=id))
 
-        serializer = ChildrenSerializer(children, data=python_data, partial=True)
+            serializer = ChildrenSerializer(children, data=python_data, partial=True)
 
-        if serializer.is_valid():
-            serializer.save()
-            return JsonResponse({"success": True, "data": serializer.data})
+            if serializer.is_valid():
+                serializer.save()
+                return JsonResponse(
+                    {"success": True, "data": serializer.data},
+                    status=status.HTTP_200_OK,
+                )
 
-        return JsonResponse({"error": serializer.errors})
+            else:
+                return JsonResponse(
+                    {"success": False, "error": serializer.errors},
+                    status=status.HTTP_406_NOT_ACCEPTABLE,
+                )
 
-    return JsonResponse({"message": "Update children"})
+        except KeyError:
+            return JsonResponse(
+                {"success": False, "error": "Required data not found"},
+                status=status.HTTP_406_NOT_ACCEPTABLE,
+            )
+
+        except Exception as e:
+            return JsonResponse(
+                {"error": e.args}, status=status.HTTP_406_NOT_ACCEPTABLE
+            )
+
+    else:
+        return JsonResponse(
+            {"success": False, "error": "Request not allowed"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
 
 # get all childrens
 @csrf_exempt
 def children_list(request):
-    hospital = authenticate_request(request)
+    try:
+        hospital = authenticate_request(request)
 
-    childrens = Children.objects.filter(hospital=hospital.id)
+        childrens = Children.objects.filter(hospital=hospital.id)
 
-    serializer = ChildrenSerializer(childrens, many=True)
+        serializer = ChildrenSerializer(childrens, many=True)
 
-    return JsonResponse({"success": True, "data": serializer.data})
+        return JsonResponse(
+            {"success": True, "data": serializer.data},
+            status=status.HTTP_200_OK,
+        )
+
+    except KeyError:
+        return JsonResponse(
+            {"success": False, "error": "Required data not found"},
+            status=status.HTTP_406_NOT_ACCEPTABLE,
+        )
+
+    except Exception as e:
+        return JsonResponse({"error": e.args}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
 
 # delete children
 @csrf_exempt
 def children_delete(request, id):
-    hospital = authenticate_request(request)
+    try:
+        hospital = authenticate_request(request)
 
-    children = Children.objects.get(Q(id=id) & Q(hospital=hospital.id))
-    children.delete()
+        children = Children.objects.get(Q(id=id) & Q(hospital=hospital.id))
+        children.delete()
 
-    return JsonResponse({"success": True, "data": "Record deleted successsfully"})
+        return JsonResponse(
+            {"success": True, "data": "Record deleted successsfully"},
+            status=status.HTTP_200_OK,
+        )
+
+    except KeyError:
+        return JsonResponse(
+            {"success": False, "error": "Required data not found"},
+            status=status.HTTP_406_NOT_ACCEPTABLE,
+        )
+
+    except Exception as e:
+        return JsonResponse({"error": e.args}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
 
 # get vaccination by date
 @csrf_exempt
 def vaccination_date(request, date):
-    hospital = authenticate_request(request)
+    try:
+        hospital = authenticate_request(request)
 
-    vaccinations = Vaccine.objects.filter(
-        date=datetime.datetime.strptime(date, "%Y-%m-%d").date(),
-        hospital_id=hospital.id,
-        taken=False,
-    ).select_related("children")
+        vaccinations = Vaccine.objects.filter(
+            date=datetime.datetime.strptime(date, "%Y-%m-%d").date(),
+            hospital_id=hospital.id,
+            taken=False,
+        ).select_related("children")
 
-    data = []
+        data = []
 
-    for vaccination in vaccinations:
-        vaccine_item = {
-            "id": vaccination.id,
-            "parent_name": vaccination.children.parent_name,
-            "parent_email": vaccination.children.parent_email,
-            "phone_number": vaccination.children.phone_number,
-            "vaccine_name": vaccination.vaccine_name,
-            "date": vaccination.date,
-            "taken": vaccination.taken,
-        }
+        for vaccination in vaccinations:
+            vaccine_item = {
+                "id": vaccination.id,
+                "parent_name": vaccination.children.parent_name,
+                "parent_email": vaccination.children.parent_email,
+                "phone_number": vaccination.children.phone_number,
+                "vaccine_name": vaccination.vaccine_name,
+                "date": vaccination.date,
+                "taken": vaccination.taken,
+            }
 
-        data.append(vaccine_item)
+            data.append(vaccine_item)
 
-    return JsonResponse({"success": True, "data": data})
+        return JsonResponse(
+            {"success": True, "data": data},
+            status=status.HTTP_200_OK,
+        )
+
+    except Exception as e:
+        return JsonResponse({"error": e.args}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
 
 # update vaccination status (take)
 @csrf_exempt
 def vaccination_update(request, id):
     if request.method == "PUT":
-        hospital = authenticate_request(request)
+        try:
+            hospital = authenticate_request(request)
 
-        json_data = request.body
-        stream = io.BytesIO(json_data)
-        python_data = JSONParser().parse(stream)
+            json_data = request.body
+            stream = io.BytesIO(json_data)
+            python_data = JSONParser().parse(stream)
 
-        python_data["taken"] = True if python_data["taken"] == "True" else False
+            python_data["taken"] = True if python_data["taken"] == "True" else False
 
-        vaccine = Vaccine.objects.get(Q(hospital=hospital.id) & Q(id=id))
+            vaccine = Vaccine.objects.get(Q(hospital=hospital.id) & Q(id=id))
 
-        serializer = VaccineSerializer(vaccine, data=python_data, partial=True)
+            serializer = VaccineSerializer(vaccine, data=python_data, partial=True)
 
-        if serializer.is_valid():
-            serializer.save()
-            return JsonResponse({"success": True, "data": serializer.data})
+            if serializer.is_valid():
+                serializer.save()
+                return JsonResponse(
+                    {"success": True, "data": serializer.data},
+                    status=status.HTTP_200_OK,
+                )
 
-        return JsonResponse({"error": serializer.errors})
+            return JsonResponse(
+                {"error": serializer.errors}, status=status.HTTP_406_NOT_ACCEPTABLE
+            )
 
-    return JsonResponse({"message": "Vaccine status update"})
+        except KeyError:
+            return JsonResponse(
+                {"success": False, "error": "Required data not found"},
+                status=status.HTTP_406_NOT_ACCEPTABLE,
+            )
+
+        except Exception as e:
+            return JsonResponse(
+                {"error": e.args}, status=status.HTTP_406_NOT_ACCEPTABLE
+            )
+
+    else:
+        return JsonResponse(
+            {"success": False, "error": "Request not allowed"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
