@@ -6,8 +6,7 @@ from rest_framework import status
 import io
 from rest_framework.parsers import JSONParser
 from django.views.decorators.csrf import csrf_exempt
-import datetime
-
+from datetime import datetime, timedelta
 
 import jwt
 from rest_framework.authentication import get_authorization_header
@@ -42,21 +41,19 @@ def add_vaccination_records(birth_date, children_id, hospital_id):
         (27, "Typhoid Conjugate Vaccine"),
     ]
 
-    today = datetime.date.today()
-    age_in_weeks = int((today - birth_date).days / 7)
-
     vaccinations = []
 
     for duration, vaccine_name in vaccination_table:
-        if age_in_weeks >= duration:
-            vaccine = {
-                "children": children_id,
-                "hospital": hospital_id,
-                "date": (birth_date + datetime.timedelta(weeks=duration)),
-                "vaccine_name": vaccine_name,
-            }
+        vaccine = {
+            "children": children_id,
+            "hospital": hospital_id,
+            "date": (birth_date + timedelta(weeks=duration)),
+            "vaccine_name": vaccine_name,
+        }
 
-            vaccinations.append(vaccine)
+        vaccinations.append(vaccine)
+
+    print(vaccinations)
 
     serializer = VaccineSerializer(data=vaccinations, many=True)
 
@@ -146,6 +143,7 @@ def hospital_login(request):
                 token = generate_token(serializer["id"])
 
                 del serializer["password"]
+                del serializer["id"]
 
                 return JsonResponse(
                     {
@@ -195,9 +193,7 @@ def children_register(request):
                 serializer.save()
 
                 add_vaccination_records(
-                    datetime.datetime.strptime(
-                        serializer.data["dob"], "%Y-%m-%d"
-                    ).date(),
+                    datetime.strptime(serializer.data["dob"], "%Y-%m-%d").date(),
                     serializer.data["id"],
                     serializer.data["hospital"],
                 )
@@ -230,13 +226,19 @@ def children_detail(request, id):
     try:
         hospital = authenticate_request(request)
 
+        children = Children.objects.get(id=id)
+        children_serializer = ChildrenSerializer(children)
+
         vaccines = Vaccine.objects.filter(hospital=hospital.id, children=id)
+        vaccine_serializer = VaccineSerializer(vaccines, many=True)
 
-        serializer = VaccineSerializer(vaccines, many=True)
+        data = {
+            "data": children_serializer.data,
+        }
 
-        return JsonResponse(
-            {"success": True, "data": serializer.data}, status=status.HTTP_200_OK
-        )
+        data["data"]["vaccines"] = vaccine_serializer.data
+
+        return JsonResponse({"success": True, "data": data}, status=status.HTTP_200_OK)
 
     except KeyError:
         return JsonResponse(
@@ -350,9 +352,9 @@ def vaccination_date(request, date):
         hospital = authenticate_request(request)
 
         vaccinations = Vaccine.objects.filter(
-            date=datetime.datetime.strptime(date, "%Y-%m-%d").date(),
+            date=datetime.strptime(date, "%Y-%m-%d").date(),
             hospital_id=hospital.id,
-            taken=False,
+            taken=True if request.GET.get("vaccinated") == "True" else False,
         ).select_related("children")
 
         data = []
@@ -360,6 +362,7 @@ def vaccination_date(request, date):
         for vaccination in vaccinations:
             vaccine_item = {
                 "id": vaccination.id,
+                "children_id": vaccination.children.id,
                 "parent_name": vaccination.children.parent_name,
                 "parent_email": vaccination.children.parent_email,
                 "phone_number": vaccination.children.phone_number,
