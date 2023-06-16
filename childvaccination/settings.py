@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 import os
 from pathlib import Path
 
+from config import POSTGRES_URL, PGNAME, PGUSER, POSTGRES_PASSWORD, PGHOST, PGPORT
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -25,7 +27,7 @@ SECRET_KEY = "django-insecure-m*z#wosquvy&8fl6ay@+45$-5dbo29+2a7jc(d$5fem%kmke1l
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["127.0.0.1", ".vercel.app"]
+ALLOWED_HOSTS = ["127.0.0.1", "*.vercel.app"]
 
 
 # Application definition
@@ -85,19 +87,19 @@ WSGI_APPLICATION = "childvaccination.wsgi.application"
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 DATABASES = {
-    # "default": {
-    #     "ENGINE": "django.db.backends.sqlite3",
-    #     "NAME": BASE_DIR / "db.sqlite3",
-    # }
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "URL": os.getenv("POSTGRES_URL"),
-        "NAME": os.getenv("PGNAME"),
-        "USER": os.getenv("PGUSER"),
-        "PASSWORD": os.getenv("POSTGRES_PASSWORD"),
-        "HOST": os.getenv("PGHOST"),
-        "PORT": os.getenv("PGPORT"),
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
+    # "default": {
+    #     "ENGINE": "django.db.backends.postgresql",
+    #     "URL": os.getenv("POSTGRES_URL"),
+    #     "NAME": os.getenv("PGNAME"),
+    #     "USER": os.getenv("PGUSER"),
+    #     "PASSWORD": os.getenv("POSTGRES_PASSWORD"),
+    #     "HOST": os.getenv("PGHOST"),
+    #     "PORT": os.getenv("PGPORT"),
+    # }
 }
 
 

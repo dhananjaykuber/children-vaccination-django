@@ -9,6 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 from datetime import datetime, timedelta
 import bcrypt
 from .validators import phone_number_validator, email_validator
+import os
 
 import jwt
 from rest_framework.authentication import get_authorization_header
