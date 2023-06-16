@@ -7,6 +7,8 @@ import io
 from rest_framework.parsers import JSONParser
 from django.views.decorators.csrf import csrf_exempt
 from datetime import datetime, timedelta
+import bcrypt
+from .validators import phone_number_validator, email_validator
 
 import jwt
 from rest_framework.authentication import get_authorization_header
@@ -27,6 +29,16 @@ def authenticate_request(request):
     hospital = decode_token(token)
     hospital = Hospital.objects.get(id=hospital["hospital_id"])
     return hospital
+
+
+# encrypt password
+def encrypt_password(password):
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+
+
+# verify password
+def verify_password(password, hashed_password):
+    return bcrypt.checkpw(password.encode("utf-8"), hashed_password.encode("utf-8"))
 
 
 # add vaccination records
@@ -63,9 +75,9 @@ def add_vaccination_records(birth_date, children_id, hospital_id):
 
 
 # authenticate hospital login
-def hospital_authenticate(email, password):
+def hospital_authenticate(email):
     try:
-        hospital = Hospital.objects.get(Q(email=email) & Q(password=password))
+        hospital = Hospital.objects.get(email=email)
 
     except Hospital.DoesNotExist:
         return None
@@ -84,6 +96,12 @@ def hospital_register(request):
             json_data = request.body
             stream = io.BytesIO(json_data)
             python_data = JSONParser().parse(stream)
+
+            phone_number_validator(python_data["phone_number"])
+            email_validator(python_data["email"])
+
+            python_data["password"] = encrypt_password(python_data["password"])
+
             serializer = HospitalSerializer(data=python_data)
 
             if serializer.is_valid():
@@ -134,11 +152,22 @@ def hospital_login(request):
             email = python_data["email"]
             password = python_data["password"]
 
-            hospital = hospital_authenticate(email, password)
+            email_validator(email)
+
+            hospital = hospital_authenticate(email)
 
             if hospital is not None:
                 serializer = HospitalSerializer(hospital)
                 serializer = serializer.data
+
+                if verify_password(password, serializer["password"]) == False:
+                    return JsonResponse(
+                        {
+                            "success": False,
+                            "error": "Please enter valid password",
+                        },
+                        status=status.HTTP_404_NOT_FOUND,
+                    )
 
                 token = generate_token(serializer["id"])
 
@@ -157,14 +186,20 @@ def hospital_login(request):
                 return JsonResponse(
                     {
                         "success": False,
-                        "error": "Invalid email password",
+                        "error": "Please enter valid email.",
                     },
-                    status=status.HTTP_406_NOT_ACCEPTABLE,
+                    status=status.HTTP_404_NOT_FOUND,
                 )
 
         except KeyError:
             return JsonResponse(
                 {"success": False, "error": "Required data not found"},
+                status=status.HTTP_406_NOT_ACCEPTABLE,
+            )
+
+        except Exception as e:
+            return JsonResponse(
+                {"status": False, "error": e.args},
                 status=status.HTTP_406_NOT_ACCEPTABLE,
             )
 
@@ -186,6 +221,9 @@ def children_register(request):
             stream = io.BytesIO(json_data)
             python_data = JSONParser().parse(stream)
             python_data["hospital"] = hospital.id
+
+            email_validator(python_data["parent_email"])
+            phone_number_validator(python_data["phone_number"])
 
             serializer = ChildrenSerializer(data=python_data)
 
