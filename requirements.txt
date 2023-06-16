@@ -1,5 +1,12 @@
-pip install PyJWT       
-pip install django-rest-auth
-pip install djangorestframework
-pip install django-cors-headers
-pip install bcrypt
+asgiref==3.7.2
+bcrypt==4.0.1
+Django==4.2.2
+django-cors-headers==4.1.0
+django-rest-auth==0.9.5
+djangorestframework==3.14.0
+PyJWT==2.7.0
+pytz==2023.3
+six==1.16.0
+sqlparse==0.4.4
+typing_extensions==4.6.3
+tzdata==2023.3
